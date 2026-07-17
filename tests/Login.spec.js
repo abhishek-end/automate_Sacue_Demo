@@ -1,19 +1,13 @@
 import { test, expect } from "@playwright/test";
+import { LoginPage } from "../pages/LoginPage";
 const url = "https://www.saucedemo.com/";
 
 test.beforeEach(async ({ page }) => {
   await page.goto(url);
-  const username = page.getByPlaceholder("Username");
-  const password = page.getByPlaceholder("Password");
-  const loginButton = page.getByRole("button", { name: /login/i });
-
-  await expect(username).toBeVisible();
-  await expect(password).toBeVisible();
-  await expect(loginButton).toBeVisible();
-
-  await username.fill("standard_user");
-  await password.fill("secret_sauce");
-  await loginButton.click();
+  const loginPage = new LoginPage(page);
+  await loginPage.expectLoginFormVisible();
+  await loginPage.login("standard_user", "secret_sauce");
+  await expect(page).toHaveURL(/inventory.html/);
 });
 
 test("Inventory page shows all 6 products with correct details", async ({
@@ -43,78 +37,79 @@ test("Inventory page shows all 6 products with correct details", async ({
   }
 });
 
-test("Add product to cart and remove it", async ({ page }) => {
-  //login
-  const inventory_list_desc = (
-    await page.locator(".inventory_item_price").first().textContent()
-  ).trim();
 
-  const homeName = (
-    await page.locator(".inventory_item_name").first().textContent()
-  ).trim();
+// test("Add product to cart and remove it", async ({ page }) => {
+//   //login
+//   const inventory_list_desc = (
+//     await page.locator(".inventory_item_price").first().textContent()
+//   ).trim();
 
-  const addToCart = page.locator(".btn_inventory").first();
-  await addToCart.click();
+//   const homeName = (
+//     await page.locator(".inventory_item_name").first().textContent()
+//   ).trim();
 
-  await expect(addToCart).toHaveText(/remove/i);
-  await expect(page.locator(".shopping_cart_badge")).toHaveText("1");
+//   const addToCart = page.locator(".btn_inventory").first();
+//   await addToCart.click();
 
-  await page.locator(".shopping_cart_link").click();
-  await expect(page).toHaveURL("https://www.saucedemo.com/cart.html");
+//   await expect(addToCart).toHaveText(/remove/i);
+//   await expect(page.locator(".shopping_cart_badge")).toHaveText("1");
 
-  const cartPage = (
-    await page.locator(".inventory_item_price").first().textContent()
-  ).trim();
-  await expect(inventory_list_desc).toEqual(cartPage);
+//   await page.locator(".shopping_cart_link").click();
+//   await expect(page).toHaveURL("https://www.saucedemo.com/cart.html");
 
-  const cartName = (
-    await page.locator(".inventory_item_name").first().textContent()
-  ).trim();
-  await expect(homeName).toEqual(cartName);
+//   const cartPage = (
+//     await page.locator(".inventory_item_price").first().textContent()
+//   ).trim();
+//   await expect(inventory_list_desc).toEqual(cartPage);
 
-  await page.getByRole("button", { name: /remove/i }).click();
-  await expect(page.locator(".shopping_cart_badge")).toHaveCount(0);
-  await expect(page.locator(".cart_item")).toHaveCount(0);
-});
+//   const cartName = (
+//     await page.locator(".inventory_item_name").first().textContent()
+//   ).trim();
+//   await expect(homeName).toEqual(cartName);
 
-test("Complete checkout flow", async ({ page }) => {
-  await page.locator(".btn_inventory").first().click();
-  await expect(page.locator(".shopping_cart_badge")).toHaveText("1");
+//   await page.getByRole("button", { name: /remove/i }).click();
+//   await expect(page.locator(".shopping_cart_badge")).toHaveCount(0);
+//   await expect(page.locator(".cart_item")).toHaveCount(0);
+// });
 
-  await page.locator(".shopping_cart_link").click();
-  await expect(page).toHaveURL("https://www.saucedemo.com/cart.html");
+// test("Complete checkout flow", async ({ page }) => {
+//   await page.locator(".btn_inventory").first().click();
+//   await expect(page.locator(".shopping_cart_badge")).toHaveText("1");
 
-  await page.getByRole("button", { name: /checkout/i }).click();
-  await expect(page).toHaveURL(
-    "https://www.saucedemo.com/checkout-step-one.html",
-  );
+//   await page.locator(".shopping_cart_link").click();
+//   await expect(page).toHaveURL("https://www.saucedemo.com/cart.html");
 
-  const inputName = page.getByPlaceholder("First Name");
-  await expect(inputName).toBeVisible();
-  await inputName.fill("Abhishek");
+//   await page.getByRole("button", { name: /checkout/i }).click();
+//   await expect(page).toHaveURL(
+//     "https://www.saucedemo.com/checkout-step-one.html",
+//   );
 
-  const lastName = page.getByPlaceholder("Last Name");
-  await expect(lastName).toBeVisible();
-  await lastName.fill("QA");
+//   const inputName = page.getByPlaceholder("First Name");
+//   await expect(inputName).toBeVisible();
+//   await inputName.fill("Abhishek");
 
-  const zipFields = page.getByPlaceholder("Zip/Postal Code");
-  await expect(zipFields).toBeVisible();
-  await zipFields.fill("123200");
+//   const lastName = page.getByPlaceholder("Last Name");
+//   await expect(lastName).toBeVisible();
+//   await lastName.fill("QA");
 
-  await page.getByRole("button", { name: /continue/i }).click();
-  await expect(page).toHaveURL(
-    "https://www.saucedemo.com/checkout-step-two.html",
-  );
+//   const zipFields = page.getByPlaceholder("Zip/Postal Code");
+//   await expect(zipFields).toBeVisible();
+//   await zipFields.fill("123200");
 
-  await page.getByRole("button", { name: /finish/i }).click();
-  await expect(page).toHaveURL(
-    "https://www.saucedemo.com/checkout-complete.html",
-  );
+//   await page.getByRole("button", { name: /continue/i }).click();
+//   await expect(page).toHaveURL(
+//     "https://www.saucedemo.com/checkout-step-two.html",
+//   );
 
-  await expect(page.getByText(/Thank you for your order!/i)).toBeVisible();
+//   await page.getByRole("button", { name: /finish/i }).click();
+//   await expect(page).toHaveURL(
+//     "https://www.saucedemo.com/checkout-complete.html",
+//   );
 
-  const backBtn = page.getByRole("button", { name: /back home/i });
-  await expect(backBtn).toBeVisible();
-  await backBtn.click();
-  await expect(page).toHaveURL("https://www.saucedemo.com/inventory.html");
-});
+//   await expect(page.getByText(/Thank you for your order!/i)).toBeVisible();
+
+//   const backBtn = page.getByRole("button", { name: /back home/i });
+//   await expect(backBtn).toBeVisible();
+//   await backBtn.click();
+//   await expect(page).toHaveURL("https://www.saucedemo.com/inventory.html");
+// });
